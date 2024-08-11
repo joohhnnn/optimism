@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 
 	"github.com/ethereum-optimism/optimism/op-node/rollup"
@@ -197,4 +198,9 @@ func (s *L2Client) OutputV0AtBlock(ctx context.Context, blockHash common.Hash) (
 		MessagePasserStorageRoot: eth.Bytes32(proof.StorageHash),
 		BlockHash:                blockHash,
 	}, nil
+}
+
+// L2BlockTxsByNumber returns the [eth.BlockInfo, types.Transactions] for the given block number.
+func (s *L2Client) L2BlockTxsByNumber(ctx context.Context, num uint64) (eth.BlockInfo, types.Transactions, error) {
+	return s.InfoAndTxsByNumber(ctx, num)
 }

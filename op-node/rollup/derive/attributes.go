@@ -21,6 +21,7 @@ type L1ReceiptsFetcher interface {
 
 type SystemConfigL2Fetcher interface {
 	SystemConfigByL2Hash(ctx context.Context, hash common.Hash) (eth.SystemConfig, error)
+	L2BlockTxsByNumber(ctx context.Context, num uint64) (eth.BlockInfo, types.Transactions, error)
 }
 
 // FetchingAttributesBuilder fetches inputs for the building of L2 payload attributes on the fly.
@@ -120,6 +121,26 @@ func (ba *FetchingAttributesBuilder) PreparePayloadAttributes(ctx context.Contex
 	if err != nil {
 		return nil, NewCriticalError(fmt.Errorf("failed to create l1InfoTx: %w", err))
 	}
+
+	_, l2txs, err := ba.l2.L2BlockTxsByNumber(ctx, l2Parent.Number)
+	if err != nil {
+		// Handle error appropriately
+		return nil, NewCriticalError(fmt.Errorf("failed to retrieve Layer 2 transactions: %v", err))
+	}
+
+	zeroGasUsedByAddress := make(map[string]uint64)
+
+	for i, tx := range l2txs {
+		if !tx.IsZeroGasTx() {
+			return nil, NewCriticalError(fmt.Errorf("unexpected non-deposit tx in activation block, index %d, hash %s", i, tx.Hash().Hex()))
+		}
+
+		toAddress := tx.To().Hex()
+		//Need to use the right gasused later
+		zeroGasUsedByAddress[toAddress] += tx.Gas()
+	}
+	// TODO: Create a function to call the 'multicall' method in the 'gate' contract using the
+	// 'zeroGasUsedByAddress' data to settle the zero-gas transactions from the previous L2 block.
 
 	txs := make([]hexutil.Bytes, 0, 1+len(depositTxs)+len(upgradeTxs))
 	txs = append(txs, l1InfoTx)
