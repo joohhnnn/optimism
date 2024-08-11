@@ -13,10 +13,9 @@ contract FeeGate is ISemver {
     string public constant version = "0.0.1-beta.1";
 
     address internal constant DEPOSITOR_ACCOUNT = 0xDeaDDEaDDeAdDeAdDEAdDEaddeAddEAdDEAd0001;
-    mapping(address => uint256) public deposits;  // 存储各合约地址的存款金额
-    mapping(address => address) public registeredContracts; // 记录已注册合约的多签地址
+    mapping(address => uint256) public deposits;
+    mapping(address => address) public registeredContracts; 
 
-    // 修饰器确保只有系统地址可以调用
     modifier onlySystem() {
         require(tx.origin == DEPOSITOR_ACCOUNT, "Unauthorized: caller is not the system");
         _;
